@@ -201,6 +201,7 @@ type Template struct {
 	Description string                                // Description of the template.
 	Quickstart  string                                // Optional text to be displayed after template creation.
 	Config      map[string]ProjectTemplateConfigValue // Optional template config.
+	Deploy      *DeployTemplate                       // Optional Deploy info
 	Important   bool                                  // Indicates whether the template should be listed by default.
 	Error       error                                 // Non-nil if the template is broken.
 
@@ -470,6 +471,7 @@ func LoadTemplate(path string) (Template, error) {
 		template.Quickstart = proj.Template.Quickstart
 		template.Config = proj.Template.Config
 		template.Important = proj.Template.Important
+		template.Deploy = proj.Template.Deploy
 	}
 	if proj.Description != nil {
 		template.ProjectDescription = *proj.Description
@@ -722,6 +724,7 @@ func transform(content string, projectName string, projectDescription string) st
 	}
 	content = strings.ReplaceAll(content, "${PROJECT}", projectName)
 	content = strings.ReplaceAll(content, "${DESCRIPTION}", projectDescription)
+
 	return content
 }
 

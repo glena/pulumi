@@ -42,6 +42,54 @@ func ValidateProjectName(s string) error {
 	return nil
 }
 
+// ValueOrSanitizedDefaultRepositoryName returns the value or a default value.
+func ValueOrSanitizedDefaultRepositoryName(name string, repositoryName string, defaultValue string) string {
+	// If we have a name, use it.
+	if name != "" {
+		return name
+	}
+
+	// If the project already has a name that isn't a replacement string, use it.
+	if repositoryName != "${REPOSITORY}" {
+		return repositoryName
+	}
+
+	// Otherwise, get a sanitized version of `defaultNameToSanitize`.
+	return defaultValue
+}
+
+// ValueOrSanitizedDefaultBranchName returns the value or a default value.
+func ValueOrSanitizedDefaultBranchName(name string, branchName string, defaultValue string) string {
+	// If we have a name, use it.
+	if name != "" {
+		return name
+	}
+
+	// If the project already has a name that isn't a replacement string, use it.
+	if branchName != "${BRANCH}" {
+		return branchName
+	}
+
+	// Otherwise, get a sanitized version of `defaultNameToSanitize`.
+	return defaultValue
+}
+
+// ValueOrSanitizedDefaultFolderName returns the value or a default value.
+func ValueOrSanitizedDefaultFolderName(name string, folderName string, defaultValue string) string {
+	// If we have a name, use it.
+	if name != "" {
+		return name
+	}
+
+	// If the project already has a name that isn't a replacement string, use it.
+	if folderName != "${FOLDER}" {
+		return folderName
+	}
+
+	// Otherwise, get a sanitized version of `defaultNameToSanitize`.
+	return defaultValue
+}
+
 // ValueOrSanitizedDefaultProjectName returns the value or a sanitized valid project name
 // based on defaultNameToSanitize.
 func ValueOrSanitizedDefaultProjectName(name string, projectName string, defaultNameToSanitize string) string {

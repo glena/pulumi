@@ -648,6 +648,10 @@ func (b *localBackend) SupportsOrganizations() bool {
 	return false
 }
 
+func (b *localBackend) SupportsDeployments() bool {
+	return false
+}
+
 func (b *localBackend) ParseStackReference(stackRef string) (backend.StackReference, error) {
 	return b.parseStackReference(stackRef)
 }
