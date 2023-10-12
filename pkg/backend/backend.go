@@ -209,6 +209,7 @@ type Backend interface {
 
 	// UpdateStackDeployment updates the stacks's deployment settings.
 	UpdateStackDeployment(ctx context.Context, stack Stack, deployment workspace.DeployTemplate) error
+	GetStackDeployment(ctx context.Context, stack Stack) (*workspace.DeployTemplateRequest, error)
 
 	// ExportDeployment exports the deployment for the given stack as an opaque JSON message.
 	ExportDeployment(ctx context.Context, stack Stack) (*apitype.UntypedDeployment, error)

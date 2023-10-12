@@ -23,6 +23,7 @@ import (
 
 	"github.com/pulumi/pulumi/pkg/v3/backend"
 	"github.com/pulumi/pulumi/pkg/v3/backend/display"
+	"github.com/pulumi/pulumi/sdk/v3/go/common/diag/colors"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/cmdutil"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/workspace"
 )
@@ -66,6 +67,7 @@ func newSetDeploymentSettingsCmd() *cobra.Command {
 
 func newDeploymentSourceCmd() *cobra.Command {
 	var stack string
+	var override bool
 	input := DeploymentSourceInput{}
 
 	cmd := &cobra.Command{
@@ -118,17 +120,32 @@ func newDeploymentSourceCmd() *cobra.Command {
 				return err
 			}
 
+			if input.isEmpty() {
+				return nil
+			}
+
+			err = sourceType.diff(ctx, currentBe, s, mergedInput, override, displayOpts)
+
+			if err != nil {
+				return err
+			}
+
 			err = sourceType.update(ctx, currentBe, s, mergedInput)
 
 			if err != nil {
 				return err
 			}
 
-			if input.isEmpty() {
-				return nil
+			err = sourceType.save(s, ps, mergedInput)
+
+			if err != nil {
+				return err
 			}
 
-			return sourceType.save(s, ps, mergedInput)
+			fmt.Println("Done!")
+
+			return nil
+
 		}),
 	}
 
@@ -136,6 +153,7 @@ func newDeploymentSourceCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&input.repository, "repository", "", "")
 	cmd.PersistentFlags().StringVar(&input.branch, "branch", "", "")
 	cmd.PersistentFlags().StringVar(&input.folder, "folder", "", "")
+	cmd.PersistentFlags().BoolVar(&override, "override", false, "")
 
 	return cmd
 }
@@ -192,6 +210,7 @@ func getSourceHandler(sourceType string) (sourceTypeInterface, error) {
 type sourceTypeInterface interface {
 	validateInput(input DeploymentSourceInput) error
 	update(ctx context.Context, b backend.Backend, s backend.Stack, input DeploymentSourceInput) error
+	diff(ctx context.Context, b backend.Backend, s backend.Stack, input DeploymentSourceInput, override bool, displayOpts display.Options) error
 	save(s backend.Stack, ps *workspace.ProjectStack, input DeploymentSourceInput) error
 }
 
@@ -207,6 +226,65 @@ func (githubSourceType) validateInput(input DeploymentSourceInput) error {
 	if input.folder == "" {
 		return fmt.Errorf("--folder is required")
 	}
+	return nil
+}
+
+func printDiff(name string, old string, new string, displayOpts display.Options) {
+	fmt.Printf("* %s:\n", name)
+	fmt.Println("\t", displayOpts.Color.Colorize(
+		colors.BrightRed+colors.Bold+"- "+old+colors.Reset))
+	fmt.Println("\t", displayOpts.Color.Colorize(
+		colors.BrightGreen+colors.Bold+"+ "+new+colors.Reset))
+}
+
+func (githubSourceType) diff(ctx context.Context, b backend.Backend, s backend.Stack,
+	input DeploymentSourceInput, override bool, displayOpts display.Options,
+) error {
+	resp, err := b.GetStackDeployment(ctx, s)
+
+	if err != nil {
+		return err
+	}
+
+	saasData := DeploymentSourceInput{
+		repository: resp.GitHub.Repository,
+		branch:     resp.SourceContext.Git.Branch,
+		folder:     resp.SourceContext.Git.RepoDir,
+		vcsType:    "github", // TODO: check how to identify it
+	}
+
+	matchRepo := saasData.repository == input.repository
+	matchBranch := saasData.branch == input.branch
+	matchFolder := saasData.folder == input.folder
+	matchType := saasData.vcsType == input.vcsType
+
+	match := matchRepo && matchBranch && matchFolder && matchType
+
+	if !match {
+		fmt.Println("Deployment settings missmatch:")
+
+		if !matchRepo {
+			printDiff("Repository", saasData.repository, input.repository, displayOpts)
+		}
+
+		if !matchBranch {
+			printDiff("Repository", saasData.branch, input.branch, displayOpts)
+		}
+
+		if !matchFolder {
+			printDiff("Repository", saasData.folder, input.folder, displayOpts)
+		}
+
+		if !matchType {
+			printDiff("Repository", saasData.vcsType, input.vcsType, displayOpts)
+		}
+
+		if !override {
+			return fmt.Errorf("Stack deployment settings is out of sync, use --override to override.")
+		}
+
+	}
+
 	return nil
 }
 

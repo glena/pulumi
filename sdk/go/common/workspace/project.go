@@ -76,7 +76,7 @@ type ProjectTemplate struct {
 }
 
 type SourceContextGitRequest struct {
-	RepoURL string `json:"repoUrl,omitempty"`
+	// RepoURL string `json:"repoUrl,omitempty"`
 	Branch  string `json:"branch,omitempty"`
 	RepoDir string `json:"repoDir,omitempty"`
 	// Commit  string `json:"commit,omitempty"`

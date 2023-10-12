@@ -1097,6 +1097,7 @@ func (pc *Client) UpdateStackTags(
 
 	return pc.restCall(ctx, "PATCH", getStackPath(stack, "tags"), nil, tags, nil)
 }
+
 func (pc *Client) UpdateStackDeployment(ctx context.Context, stack StackIdentifier,
 	deployment workspace.DeployTemplate) error {
 
@@ -1118,6 +1119,17 @@ func (pc *Client) UpdateStackDeployment(ctx context.Context, stack StackIdentifi
 	}
 
 	return pc.restCall(ctx, "POST", getStackPath(stack, "deployments", "settings"), nil, request, nil)
+}
+
+func (pc *Client) GetStackDeployment(ctx context.Context, stack StackIdentifier) (*workspace.DeployTemplateRequest, error) {
+
+	// TODO(german): validate deployment
+
+	var response workspace.DeployTemplateRequest
+
+	err := pc.restCall(ctx, "GET", getStackPath(stack, "deployments", "settings"), nil, nil, &response)
+
+	return &response, err
 }
 
 func getDeploymentPath(stack StackIdentifier, components ...string) string {

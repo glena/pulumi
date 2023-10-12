@@ -59,10 +59,12 @@ type MockBackend struct {
 	GetHistoryF             func(context.Context, StackReference, int, int) ([]UpdateInfo, error)
 	UpdateStackTagsF        func(context.Context, Stack, map[apitype.StackTagName]string) error
 	UpdateStackDeploymentF  func(context.Context, Stack, workspace.DeployTemplate) error
-	ExportDeploymentF       func(context.Context, Stack) (*apitype.UntypedDeployment, error)
-	ImportDeploymentF       func(context.Context, Stack, *apitype.UntypedDeployment) error
-	CurrentUserF            func() (string, []string, *workspace.TokenInformation, error)
-	PreviewF                func(context.Context, Stack,
+	GetStackDeploymentF     func(context.Context, Stack) (*workspace.DeployTemplateRequest, error)
+
+	ExportDeploymentF func(context.Context, Stack) (*apitype.UntypedDeployment, error)
+	ImportDeploymentF func(context.Context, Stack, *apitype.UntypedDeployment) error
+	CurrentUserF      func() (string, []string, *workspace.TokenInformation, error)
+	PreviewF          func(context.Context, Stack,
 		UpdateOperation) (*deploy.Plan, sdkDisplay.ResourceChanges, result.Result)
 	UpdateF func(context.Context, Stack,
 		UpdateOperation) (sdkDisplay.ResourceChanges, result.Result)
@@ -339,6 +341,14 @@ func (be *MockBackend) UpdateStackDeployment(ctx context.Context, stack Stack,
 	deployment workspace.DeployTemplate) error {
 	if be.UpdateStackTagsF != nil {
 		return be.UpdateStackDeploymentF(ctx, stack, deployment)
+	}
+	panic("not implemented")
+}
+
+func (be *MockBackend) GetStackDeployment(ctx context.Context,
+	stack Stack) (*workspace.DeployTemplateRequest, error) {
+	if be.UpdateStackTagsF != nil {
+		return be.GetStackDeploymentF(ctx, stack)
 	}
 	panic("not implemented")
 }

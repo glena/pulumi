@@ -1310,6 +1310,12 @@ func (b *localBackend) UpdateStackDeployment(ctx context.Context, stack backend.
 	return errors.New("stack deployments not supported in --local mode")
 }
 
+func (b *localBackend) GetStackDeployment(ctx context.Context,
+	stack backend.Stack) (*workspace.DeployTemplateRequest, error) {
+	// The local backend does not currently persist tags.
+	return nil, errors.New("stack deployments not supported in --local mode")
+}
+
 func (b *localBackend) CancelCurrentUpdate(ctx context.Context, stackRef backend.StackReference) error {
 	// Try to delete ALL the lock files
 	allFiles, err := listBucket(ctx, b.bucket, stackLockDir(stackRef.FullyQualifiedName()))

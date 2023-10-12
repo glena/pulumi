@@ -1730,6 +1730,17 @@ func (b *cloudBackend) UpdateStackDeployment(ctx context.Context, stack backend.
 	return b.client.UpdateStackDeployment(ctx, stackID, deployment)
 }
 
+func (b *cloudBackend) GetStackDeployment(ctx context.Context,
+	stack backend.Stack) (*workspace.DeployTemplateRequest, error) {
+
+	stackID, err := b.getCloudStackIdentifier(stack.Ref())
+	if err != nil {
+		return nil, err
+	}
+
+	return b.client.GetStackDeployment(ctx, stackID)
+}
+
 const pulumiOperationHeader = "Pulumi operation"
 
 func (b *cloudBackend) RunDeployment(ctx context.Context, stackRef backend.StackReference,
