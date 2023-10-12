@@ -648,6 +648,10 @@ func (b *localBackend) SupportsOrganizations() bool {
 	return false
 }
 
+func (b *localBackend) SupportsDeployments() bool {
+	return false
+}
+
 func (b *localBackend) ParseStackReference(stackRef string) (backend.StackReference, error) {
 	return b.parseStackReference(stackRef)
 }
@@ -1298,6 +1302,19 @@ func (b *localBackend) UpdateStackTags(ctx context.Context,
 ) error {
 	// The local backend does not currently persist tags.
 	return errors.New("stack tags not supported in --local mode")
+}
+
+// UpdateStackDeployment updates the stacks's deployment settings.
+func (b *localBackend) UpdateStackDeployment(ctx context.Context, stack backend.Stack,
+	deployment workspace.DeployTemplate) error {
+	// The local backend does not currently persist tags.
+	return errors.New("stack deployments not supported in --local mode")
+}
+
+func (b *localBackend) GetStackDeployment(ctx context.Context,
+	stack backend.Stack) (*workspace.DeployTemplateRequest, error) {
+	// The local backend does not currently persist tags.
+	return nil, errors.New("stack deployments not supported in --local mode")
 }
 
 func (b *localBackend) CancelCurrentUpdate(ctx context.Context, stackRef backend.StackReference) error {

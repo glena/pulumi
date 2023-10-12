@@ -126,6 +126,61 @@
             },
             "additionalProperties":false
         },
+        "deploy":{
+            "description":"Deployment configruation of the project.",
+            "type":[
+                "object",
+                "null"
+            ],
+            "properties":{
+                "sourceContext":{
+                    "description":"Source contect configuration.",
+                    "type":[
+                        "object",
+                        "null"
+                    ],
+                    "properties":{
+                        "type":{
+                            "type":"string",
+                            "enum" : ["git", "github"]
+                        },
+                        "repository":{
+                            "type":"string"
+                        },
+                        "branch":{
+                            "type":"string"
+                        },
+                        "folder":{
+                            "type":"string"
+                        }
+                    },
+                    "additionalProperties":false
+                },
+                "operation":{
+                    "description":"Deployment operation configuration.",
+                    "type":[
+                        "object",
+                        "null"
+                    ],
+                    "properties":{
+                        "skipIntermediateDeployments":{
+                            "type":[
+                                "boolean",
+                                "null"
+                            ]
+                        },
+                        "skipInstallDependencies":{
+                            "type":[
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "additionalProperties":false
+                }
+            },
+            "additionalProperties":false
+        },
         "options":{
             "description":"Additional project options.",
             "type":[
@@ -197,6 +252,61 @@
                             }
                         }
                     }
+                },
+                "deploy":{
+                    "description":"Deployment configruation of the project.",
+                    "type":[
+                        "object",
+                        "null"
+                    ],
+                    "properties":{
+                        "sourceContext":{
+                            "description":"Source contect configuration.",
+                            "type":[
+                                "object",
+                                "null"
+                            ],
+                            "properties":{
+                                "type":{
+                                    "type":"string",
+                                    "enum" : ["git", "github"]
+                                },
+                                "repository":{
+                                    "type":"string"
+                                },
+                                "branch":{
+                                    "type":"string"
+                                },
+                                "folder":{
+                                    "type":"string"
+                                }
+                            },
+                            "additionalProperties":false
+                        },
+                        "operation":{
+                            "description":"Deployment operation configuration.",
+                            "type":[
+                                "object",
+                                "null"
+                            ],
+                            "properties":{
+                                "skipIntermediateDeployments":{
+                                    "type":[
+                                        "boolean",
+                                        "null"
+                                    ]
+                                },
+                                "skipInstallDependencies":{
+                                    "type":[
+                                        "boolean",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "additionalProperties":false
+                        }
+                    },
+                    "additionalProperties":false
                 }
             },
             "additionalProperties":false

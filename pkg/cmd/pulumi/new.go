@@ -303,8 +303,9 @@ func runNew(ctx context.Context, args newArgs) error {
 
 	// Create the stack, if needed.
 	if !args.generateOnly && s == nil {
+		// TODO(german): if stack exists, we should check to update deployment settings
 		if s, err = promptAndCreateStack(ctx, b, args.prompt,
-			args.stack, root, true /*setCurrent*/, args.yes, opts, args.secretsProvider); err != nil {
+			args.stack, root, true /*setCurrent*/, args.yes, opts, args.secretsProvider, template.Deploy); err != nil {
 			return err
 		}
 		// The backend will print "Created stack '<stack>'" on success.
@@ -317,6 +318,13 @@ func runNew(ctx context.Context, args newArgs) error {
 			ctx, args.prompt, proj, s,
 			args.templateNameOrURL, template, args.configArray,
 			args.yes, args.configPath, opts)
+
+		if err != nil {
+			return err
+		}
+
+		err = handleDeployment(ctx, args.prompt, b, s, template, args.yes, opts)
+
 		if err != nil {
 			return err
 		}
@@ -365,6 +373,88 @@ func runNew(ctx context.Context, args newArgs) error {
 	}
 
 	return nil
+}
+
+func handleDeployment(
+	ctx context.Context,
+	prompt promptForValueFunc,
+	b backend.Backend,
+	s backend.Stack,
+	template workspace.Template,
+	yes bool,
+	opts display.Options,
+) error {
+	if template.Deploy == nil {
+		return nil
+	}
+
+	if !b.SupportsDeployments() {
+		fmt.Print("Skipping deployment configuration as it is not supported by this backend.\n")
+		return nil
+	}
+
+	fmt.Print("Configuring deployments.\n")
+
+	// TODO(german): we should add flags for setting these values when invoking the command
+	defaultRepoName := pkgWorkspace.ValueOrSanitizedDefaultRepositoryName("", template.Deploy.SourceContext["repository"], "")
+	repoName, err := prompt(yes, "Repository", defaultRepoName, false, pkgWorkspace.ValidateProjectDescription, opts)
+	if err != nil {
+		return err
+	}
+
+	defaultBranchName := pkgWorkspace.ValueOrSanitizedDefaultBranchName("", template.Deploy.SourceContext["branch"], "refs/heads/main")
+	branchName, err := prompt(yes, "Branch", defaultBranchName, false, pkgWorkspace.ValidateProjectDescription, opts)
+	if err != nil {
+		return err
+	}
+
+	defaultFolderName := pkgWorkspace.ValueOrSanitizedDefaultFolderName("", template.Deploy.SourceContext["folder"], ".")
+	folderName, err := prompt(yes, "Program folder", defaultFolderName, false, pkgWorkspace.ValidateProjectDescription, opts)
+	if err != nil {
+		return err
+	}
+
+	deploymentSettings := workspace.DeployTemplate{
+		SourceContext: map[string]string{
+			"type":       "github",
+			"repository": repoName,
+			"branch":     branchName,
+			"folder":     folderName,
+		},
+		Operation: template.Deploy.Operation,
+	}
+
+	if err = b.UpdateStackDeployment(ctx, s, deploymentSettings); err != nil {
+		return fmt.Errorf("updating deployment settings: %w", err)
+	}
+
+	if err = saveDeployment(s, deploymentSettings); err != nil {
+		return fmt.Errorf("saving deployment: %w", err)
+	}
+
+	fmt.Println("Saved deployment")
+	fmt.Println()
+
+	return nil
+}
+
+// saveDeployment saves the deployment data for the stack.
+func saveDeployment(stack backend.Stack, deployment workspace.DeployTemplate) error {
+	project, _, err := readProject()
+	if err != nil {
+		return err
+	}
+
+	ps, err := loadProjectStack(project, stack)
+	if err != nil {
+		return err
+	}
+
+	ps.Deploy = deployment
+
+	// TODO(german): update stack deployment settings through api
+
+	return saveProjectStack(stack, ps)
 }
 
 // Ensure the directory exists and uses it as the current working
@@ -625,7 +715,7 @@ func getStack(ctx context.Context, b backend.Backend,
 // promptAndCreateStack creates and returns a new stack (prompting for the name as needed).
 func promptAndCreateStack(ctx context.Context, b backend.Backend, prompt promptForValueFunc,
 	stack string, root string, setCurrent bool, yes bool, opts display.Options,
-	secretsProvider string,
+	secretsProvider string, deploy *workspace.DeployTemplate,
 ) (backend.Stack, error) {
 	contract.Requiref(b != nil, "b", "must not be nil")
 	contract.Requiref(root != "", "root", "must not be empty")
@@ -657,6 +747,7 @@ func promptAndCreateStack(ctx context.Context, b backend.Backend, prompt promptF
 		if err != nil {
 			return nil, err
 		}
+
 		s, err := stackInit(ctx, b, formattedStackName, root, setCurrent, secretsProvider)
 		if err != nil {
 			if !yes {

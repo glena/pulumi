@@ -71,6 +71,51 @@ type ProjectTemplate struct {
 	Config map[string]ProjectTemplateConfigValue `json:"config,omitempty" yaml:"config,omitempty"`
 	// Important indicates the template is important and should be listed by default.
 	Important bool `json:"important,omitempty" yaml:"important,omitempty"`
+	// Deploy is an optional template config.
+	Deploy *DeployTemplate `json:"deploy,omitempty" yaml:"deploy,omitempty"`
+}
+
+type SourceContextGitRequest struct {
+	// RepoURL string `json:"repoUrl,omitempty"`
+	Branch  string `json:"branch,omitempty"`
+	RepoDir string `json:"repoDir,omitempty"`
+	// Commit  string `json:"commit,omitempty"`
+	// GitAuth GitAuthConfigRequest `json:"gitAuth,omitempty"`
+}
+
+type SourceContextRequest struct {
+	Git SourceContextGitRequest `json:"git,omitempty"`
+}
+
+type OperationContextOptionsRequest struct {
+	SkipInstallDependencies     bool   `json:"skipInstallDependencies,omitempty"`
+	SkipIntermediateDeployments bool   `json:"skipIntermediateDeployments,omitempty"`
+	Shell                       string `json:"shell,omitempty"`
+	DeleteAfterDestroy          bool   `json:"deleteAfterDestroy,omitempty"`
+}
+
+type OperationContextRequest struct {
+	Options OperationContextOptionsRequest `json:"options,omitempty"`
+}
+
+type DeploymentSettingsGitHubRequest struct {
+	Repository          string   `json:"repository,omitempty"`
+	DeployCommits       bool     `json:"deployCommits,omitempty"`
+	PreviewPullRequests bool     `json:"previewPullRequests,omitempty"`
+	PullRequestTemplate bool     `json:"pullRequestTemplate"`
+	DeployPullRequest   int64    `json:"deployPullRequest,omitempty"`
+	Paths               []string `json:"paths,omitempty"`
+}
+
+type DeployTemplateRequest struct {
+	SourceContext SourceContextRequest            `json:"sourceContext,omitempty"`
+	Operation     OperationContextRequest         `json:"operationContext,omitempty"`
+	GitHub        DeploymentSettingsGitHubRequest `json:"gitHub,omitempty"`
+}
+
+type DeployTemplate struct {
+	SourceContext map[string]string `json:"sourceContext,omitempty" yaml:"sourceContext,omitempty"`
+	Operation     map[string]bool   `json:"operation,omitempty" yaml:"operation,omitempty"`
 }
 
 // ProjectTemplateConfigValue is a config value included in the project template manifest.
@@ -618,6 +663,8 @@ type ProjectStack struct {
 	Config config.Map `json:"config,omitempty" yaml:"config,omitempty"`
 	// Environment is an optional environment definition or list of environments.
 	Environment *Environment `json:"environment,omitempty" yaml:"environment,omitempty"`
+	// Project deploy configuration.
+	Deploy DeployTemplate `json:"deploy,omitempty" yaml:"deploy,omitempty"`
 
 	// The original byte representation of the file, used to attempt trivia-preserving edits
 	raw []byte

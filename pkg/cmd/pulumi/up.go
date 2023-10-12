@@ -307,7 +307,7 @@ func newUpCmd() *cobra.Command {
 		// Create the stack, if needed.
 		if s == nil {
 			if s, err = promptAndCreateStack(ctx, b, promptForValue, stackName, root, false /*setCurrent*/, yes,
-				opts.Display, secretsProvider); err != nil {
+				opts.Display, secretsProvider, template.Deploy); err != nil {
 				return result.FromError(err)
 			}
 			// The backend will print "Created stack '<stack>'." on success.

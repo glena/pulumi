@@ -43,6 +43,7 @@ type MockBackend struct {
 	GetPolicyPackF         func(ctx context.Context, policyPack string, d diag.Sink) (PolicyPack, error)
 	SupportsTagsF          func() bool
 	SupportsOrganizationsF func() bool
+	SupportsDeploymentsF   func() bool
 	ParseStackReferenceF   func(s string) (StackReference, error)
 	ValidateStackNameF     func(s string) error
 	DoesProjectExistF      func(context.Context, string, string) (bool, error)
@@ -57,10 +58,13 @@ type MockBackend struct {
 	GetLatestConfigurationF func(context.Context, Stack) (config.Map, error)
 	GetHistoryF             func(context.Context, StackReference, int, int) ([]UpdateInfo, error)
 	UpdateStackTagsF        func(context.Context, Stack, map[apitype.StackTagName]string) error
-	ExportDeploymentF       func(context.Context, Stack) (*apitype.UntypedDeployment, error)
-	ImportDeploymentF       func(context.Context, Stack, *apitype.UntypedDeployment) error
-	CurrentUserF            func() (string, []string, *workspace.TokenInformation, error)
-	PreviewF                func(context.Context, Stack,
+	UpdateStackDeploymentF  func(context.Context, Stack, workspace.DeployTemplate) error
+	GetStackDeploymentF     func(context.Context, Stack) (*workspace.DeployTemplateRequest, error)
+
+	ExportDeploymentF func(context.Context, Stack) (*apitype.UntypedDeployment, error)
+	ImportDeploymentF func(context.Context, Stack, *apitype.UntypedDeployment) error
+	CurrentUserF      func() (string, []string, *workspace.TokenInformation, error)
+	PreviewF          func(context.Context, Stack,
 		UpdateOperation) (*deploy.Plan, sdkDisplay.ResourceChanges, result.Result)
 	UpdateF func(context.Context, Stack,
 		UpdateOperation) (sdkDisplay.ResourceChanges, result.Result)
@@ -132,6 +136,13 @@ func (be *MockBackend) SupportsTags() bool {
 func (be *MockBackend) SupportsOrganizations() bool {
 	if be.SupportsOrganizationsF != nil {
 		return be.SupportsOrganizationsF()
+	}
+	panic("not implemented")
+}
+
+func (be *MockBackend) SupportsDeployments() bool {
+	if be.SupportsOrganizationsF != nil {
+		return be.SupportsDeploymentsF()
 	}
 	panic("not implemented")
 }
@@ -322,6 +333,22 @@ func (be *MockBackend) UpdateStackTags(ctx context.Context, stack Stack,
 ) error {
 	if be.UpdateStackTagsF != nil {
 		return be.UpdateStackTagsF(ctx, stack, tags)
+	}
+	panic("not implemented")
+}
+
+func (be *MockBackend) UpdateStackDeployment(ctx context.Context, stack Stack,
+	deployment workspace.DeployTemplate) error {
+	if be.UpdateStackTagsF != nil {
+		return be.UpdateStackDeploymentF(ctx, stack, deployment)
+	}
+	panic("not implemented")
+}
+
+func (be *MockBackend) GetStackDeployment(ctx context.Context,
+	stack Stack) (*workspace.DeployTemplateRequest, error) {
+	if be.UpdateStackTagsF != nil {
+		return be.GetStackDeploymentF(ctx, stack)
 	}
 	panic("not implemented")
 }

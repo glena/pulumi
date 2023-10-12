@@ -1098,6 +1098,40 @@ func (pc *Client) UpdateStackTags(
 	return pc.restCall(ctx, "PATCH", getStackPath(stack, "tags"), nil, tags, nil)
 }
 
+func (pc *Client) UpdateStackDeployment(ctx context.Context, stack StackIdentifier,
+	deployment workspace.DeployTemplate) error {
+
+	// TODO(german): validate deployment
+
+	request := workspace.DeployTemplateRequest{
+		SourceContext: workspace.SourceContextRequest{
+			Git: workspace.SourceContextGitRequest{
+				RepoDir: deployment.SourceContext["folder"],
+				Branch:  deployment.SourceContext["branch"],
+			},
+		},
+		GitHub: workspace.DeploymentSettingsGitHubRequest{
+			Repository:          deployment.SourceContext["repository"],
+			DeployCommits:       true,
+			PreviewPullRequests: true,
+			PullRequestTemplate: false,
+		},
+	}
+
+	return pc.restCall(ctx, "POST", getStackPath(stack, "deployments", "settings"), nil, request, nil)
+}
+
+func (pc *Client) GetStackDeployment(ctx context.Context, stack StackIdentifier) (*workspace.DeployTemplateRequest, error) {
+
+	// TODO(german): validate deployment
+
+	var response workspace.DeployTemplateRequest
+
+	err := pc.restCall(ctx, "GET", getStackPath(stack, "deployments", "settings"), nil, nil, &response)
+
+	return &response, err
+}
+
 func getDeploymentPath(stack StackIdentifier, components ...string) string {
 	prefix := fmt.Sprintf("/api/preview/%s/%s/%s/deployments", stack.Owner, stack.Project, stack.Stack)
 	return path.Join(append([]string{prefix}, components...)...)
