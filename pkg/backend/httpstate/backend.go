@@ -1718,6 +1718,18 @@ func (b *cloudBackend) UpdateStackTags(ctx context.Context,
 	return b.client.UpdateStackTags(ctx, stackID, tags)
 }
 
+// UpdateStackDeployment updates the stacks's deployment settings.
+func (b *cloudBackend) UpdateStackDeployment(ctx context.Context, stack backend.Stack,
+	deployment workspace.DeployTemplate) error {
+
+	stackID, err := b.getCloudStackIdentifier(stack.Ref())
+	if err != nil {
+		return err
+	}
+
+	return b.client.UpdateStackDeployment(ctx, stackID, deployment)
+}
+
 const pulumiOperationHeader = "Pulumi operation"
 
 func (b *cloudBackend) RunDeployment(ctx context.Context, stackRef backend.StackReference,

@@ -207,6 +207,9 @@ type Backend interface {
 	// UpdateStackTags updates the stacks's tags, replacing all existing tags.
 	UpdateStackTags(ctx context.Context, stack Stack, tags map[apitype.StackTagName]string) error
 
+	// UpdateStackDeployment updates the stacks's deployment settings.
+	UpdateStackDeployment(ctx context.Context, stack Stack, deployment workspace.DeployTemplate) error
+
 	// ExportDeployment exports the deployment for the given stack as an opaque JSON message.
 	ExportDeployment(ctx context.Context, stack Stack) (*apitype.UntypedDeployment, error)
 	// ImportDeployment imports the given deployment into the indicated stack.

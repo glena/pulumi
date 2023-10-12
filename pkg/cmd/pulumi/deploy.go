@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -107,7 +108,6 @@ func newDeploymentSourceCmd() *cobra.Command {
 			mergedInput := mergeDeploymentSourceInput(ps.Deploy.SourceContext, input)
 
 			sourceType, err := getSourceHandler(mergedInput.vcsType)
-
 			if err != nil {
 				return err
 			}
@@ -118,7 +118,7 @@ func newDeploymentSourceCmd() *cobra.Command {
 				return err
 			}
 
-			err = sourceType.update(currentBe, ps, mergedInput)
+			err = sourceType.update(ctx, currentBe, s, mergedInput)
 
 			if err != nil {
 				return err
@@ -191,7 +191,7 @@ func getSourceHandler(sourceType string) (sourceTypeInterface, error) {
 
 type sourceTypeInterface interface {
 	validateInput(input DeploymentSourceInput) error
-	update(backend backend.Backend, ps *workspace.ProjectStack, input DeploymentSourceInput) error
+	update(ctx context.Context, b backend.Backend, s backend.Stack, input DeploymentSourceInput) error
 	save(s backend.Stack, ps *workspace.ProjectStack, input DeploymentSourceInput) error
 }
 
@@ -210,9 +210,22 @@ func (githubSourceType) validateInput(input DeploymentSourceInput) error {
 	return nil
 }
 
-func (githubSourceType) update(backend backend.Backend, ps *workspace.ProjectStack, input DeploymentSourceInput) error {
-	// return backend.SetDeploymentSettingsSource(project, "github", input)
-	return nil
+func (githubSourceType) update(ctx context.Context, b backend.Backend, s backend.Stack,
+	input DeploymentSourceInput,
+) error {
+	// we should probably use the same structure we have in pulumi-server so we can just
+	// serialize and avoid the mapping before calling the api.
+
+	deploymentSettings := workspace.DeployTemplate{
+		SourceContext: map[string]string{
+			"type":       "github",
+			"repository": input.repository,
+			"branch":     input.branch,
+			"folder":     input.folder,
+		},
+	}
+
+	return b.UpdateStackDeployment(ctx, s, deploymentSettings)
 }
 
 func (githubSourceType) save(s backend.Stack, ps *workspace.ProjectStack, input DeploymentSourceInput) error {

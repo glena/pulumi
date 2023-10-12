@@ -323,7 +323,7 @@ func runNew(ctx context.Context, args newArgs) error {
 			return err
 		}
 
-		err = handleDeployment(args.prompt, s, template, args.yes, opts)
+		err = handleDeployment(ctx, args.prompt, b, s, template, args.yes, opts)
 
 		if err != nil {
 			return err
@@ -376,15 +376,20 @@ func runNew(ctx context.Context, args newArgs) error {
 }
 
 func handleDeployment(
+	ctx context.Context,
 	prompt promptForValueFunc,
+	b backend.Backend,
 	s backend.Stack,
 	template workspace.Template,
 	yes bool,
 	opts display.Options,
 ) error {
-
 	if template.Deploy == nil {
-		fmt.Print("Skipping deployments.\n")
+		return nil
+	}
+
+	if !b.SupportsDeployments() {
+		fmt.Print("Skipping deployment configuration as it is not supported by this backend.\n")
 		return nil
 	}
 
@@ -397,7 +402,7 @@ func handleDeployment(
 		return err
 	}
 
-	defaultBranchName := pkgWorkspace.ValueOrSanitizedDefaultBranchName("", template.Deploy.SourceContext["branch"], "main")
+	defaultBranchName := pkgWorkspace.ValueOrSanitizedDefaultBranchName("", template.Deploy.SourceContext["branch"], "refs/heads/main")
 	branchName, err := prompt(yes, "Branch", defaultBranchName, false, pkgWorkspace.ValidateProjectDescription, opts)
 	if err != nil {
 		return err
@@ -417,6 +422,10 @@ func handleDeployment(
 			"folder":     folderName,
 		},
 		Operation: template.Deploy.Operation,
+	}
+
+	if err = b.UpdateStackDeployment(ctx, s, deploymentSettings); err != nil {
+		return fmt.Errorf("updating deployment settings: %w", err)
 	}
 
 	if err = saveDeployment(s, deploymentSettings); err != nil {
